@@ -5,6 +5,7 @@
 # Secrets
 token.json
 credentials.json
+token.pickle
 
 # Python cache
 __pycache__/
