@@ -1,0 +1,13 @@
+# Environments
+.env
+.venv/
+
+# Secrets
+token.json
+credentials.json
+
+# Python cache
+__pycache__/
+
+# Agent's working directory
+agent_working/
