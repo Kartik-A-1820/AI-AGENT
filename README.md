@@ -91,7 +91,7 @@ Here are some examples of how you can use the agent's tools:
 - **Create a presentation:**
   `"Create a 5-slide presentation on the history of space exploration, with images."`
 - **Create a Word document:**
-  `"Create a Word document summarizing the key points of the latest earnings report, and include a chart."`
+  `"Create a Word document summarizing the key points of the latest AI trends, and include images."`
 - **Send an email with an attachment:**
   `"Send an email to my manager with the presentation I just created."`
 - **Schedule a meeting with a Google Meet link:**
