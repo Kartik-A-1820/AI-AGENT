@@ -11,6 +11,7 @@ from image_generation_tools import generate_image_from_prompt
 class DocxContent(BaseModel):
     text: str = Field(..., description="A paragraph of text for the document.")
     image_path: Optional[str] = Field(None, description="The local path to an image to include with the paragraph.")
+    image_prompt: Optional[str] = Field(None, description="A prompt to generate a relevant image for the paragraph.")
 
 
 AGENT_DIR = "agent_working"
@@ -98,6 +99,14 @@ def create_docx_document(title: str, content: List[DocxContent], output_filename
     for i, item in enumerate(content):
         document.add_paragraph(item.text)
         
+        if not item.image_path and item.image_prompt:
+            img_name = f"doc_image_{i+1}.png"
+            result = generate_image_from_prompt.invoke(
+                {"prompt": item.image_prompt, "filename": img_name}
+            )
+            if result.startswith("✅"):
+                item.image_path = result.split("→", 1)[-1].strip()
+
         if item.image_path and os.path.exists(item.image_path):
             document.add_picture(item.image_path, width=Inches(5.0))
 
