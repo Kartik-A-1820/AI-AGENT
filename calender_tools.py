@@ -17,21 +17,21 @@ class ScheduleMeetInput(BaseModel):
     attendees: Optional[List[str]] = Field(None, description="A list of attendee email addresses.")
     timezone: str = Field("Asia/Kolkata", description="The timezone for the event.")
 
-@tool
-def schedule_google_meet_event(input_data: ScheduleMeetInput) -> str:
+@tool(args_schema=ScheduleMeetInput)
+def schedule_google_meet_event(event_title: str, start_time: str, end_time: str, description: str = "", attendees: Optional[List[str]] = None, timezone: str = "Asia/Kolkata") -> str:
     """Create a calendar event with a Google Meet link."""
     try:
         service = build('calendar', 'v3', credentials=get_google_credentials())
         event = {
-            "summary": input_data.event_title,
-            "description": input_data.description,
-            "start": {"dateTime": input_data.start_time, "timeZone": input_data.timezone},
-            "end": {"dateTime": input_data.end_time, "timeZone": input_data.timezone},
-            "attendees": [{"email": email} for email in (input_data.attendees or [])],
+            "summary": event_title,
+            "description": description,
+            "start": {"dateTime": start_time, "timeZone": timezone},
+            "end": {"dateTime": end_time, "timeZone": timezone},
+            "attendees": [{"email": email} for email in (attendees or [])],
             "conferenceData": {
                 "createRequest": {
                     "conferenceSolutionKey": {"type": "hangoutsMeet"},
-                    "requestId": f"meet-{input_data.event_title}-{input_data.start_time}".replace(" ", "-"),
+                    "requestId": f"meet-{event_title}-{start_time}".replace(" ", "-"),
                 }
             }
         }
@@ -53,34 +53,34 @@ class CreateEventInput(BaseModel):
     description: str = Field("", description="A description of the event.")
     timezone: str = Field("Asia/Kolkata", description="The timezone for the event.")
 
-@tool
-def create_calendar_event(input_data: CreateEventInput) -> str:
+@tool(args_schema=CreateEventInput)
+def create_calendar_event(event_name: str, start_time: str, end_time: str, description: str = "", timezone: str = "Asia/Kolkata") -> str:
     """Create a new Google Calendar event."""
     try:
         service = get_calendar_service()
         event = {
-            "summary": input_data.event_name,
-            "description": input_data.description,
-            "start": {"dateTime": input_data.start_time, "timeZone": input_data.timezone},
-            "end": {"dateTime": input_data.end_time, "timeZone": input_data.timezone}
+            "summary": event_name,
+            "description": description,
+            "start": {"dateTime": start_time, "timeZone": timezone},
+            "end": {"dateTime": end_time, "timeZone": timezone}
         }
         created_event = service.events().insert(calendarId='primary', body=event).execute()
-        return f"Event '{input_data.event_name}' created: {created_event.get('htmlLink')}"
+        return f"Event '{event_name}' created: {created_event.get('htmlLink')}"
     except Exception as e:
         return f"Failed to create event: {e}"
 
 class ListEventsInput(BaseModel):
     max_results: int = Field(10, description="The maximum number of events to return.")
 
-@tool
-def list_calendar_events(input_data: ListEventsInput) -> str:
+@tool(args_schema=ListEventsInput)
+def list_calendar_events(max_results: int = 10) -> str:
     """List upcoming Google Calendar events."""
     try:
         service = get_calendar_service()
         now = datetime.utcnow().isoformat() + 'Z'
         events_result = service.events().list(
             calendarId='primary', timeMin=now,
-            maxResults=input_data.max_results, singleEvents=True,
+            maxResults=max_results, singleEvents=True,
             orderBy='startTime'
         ).execute()
         events = events_result.get('items', [])
@@ -97,13 +97,13 @@ def list_calendar_events(input_data: ListEventsInput) -> str:
 class DeleteEventInput(BaseModel):
     event_id: str = Field(..., description="The ID of the event to delete.")
 
-@tool
-def delete_calendar_event(input_data: DeleteEventInput) -> str:
+@tool(args_schema=DeleteEventInput)
+def delete_calendar_event(event_id: str) -> str:
     """Delete a calendar event by its event ID."""
     try:
         service = get_calendar_service()
-        service.events().delete(calendarId='primary', eventId=input_data.event_id).execute()
-        return f"Event with ID '{input_data.event_id}' deleted."
+        service.events().delete(calendarId='primary', eventId=event_id).execute()
+        return f"Event with ID '{event_id}' deleted."
     except Exception as e:
         return f"Failed to delete event: {e}"
 
@@ -115,23 +115,23 @@ class UpdateEventInput(BaseModel):
     new_description: Optional[str] = Field(None, description="The new description for the event.")
     timezone: str = Field("Asia/Kolkata", description="The timezone for the event.")
 
-@tool
-def update_calendar_event(input_data: UpdateEventInput) -> str:
+@tool(args_schema=UpdateEventInput)
+def update_calendar_event(event_id: str, new_summary: Optional[str] = None, new_start: Optional[str] = None, new_end: Optional[str] = None, new_description: Optional[str] = None, timezone: str = "Asia/Kolkata") -> str:
     """Update a calendar event's title, time, or description."""
     try:
         service = get_calendar_service()
-        event = service.events().get(calendarId='primary', eventId=input_data.event_id).execute()
-        if input_data.new_summary:
-            event['summary'] = input_data.new_summary
-        if input_data.new_description:
-            event['description'] = input_data.new_description
-        if input_data.new_start:
-            event['start']['dateTime'] = input_data.new_start
-            event['start']['timeZone'] = input_data.timezone
-        if input_data.new_end:
-            event['end']['dateTime'] = input_data.new_end
-            event['end']['timeZone'] = input_data.timezone
-        updated_event = service.events().update(calendarId='primary', eventId=input_data.event_id, body=event).execute()
+        event = service.events().get(calendarId='primary', eventId=event_id).execute()
+        if new_summary:
+            event['summary'] = new_summary
+        if new_description:
+            event['description'] = new_description
+        if new_start:
+            event['start']['dateTime'] = new_start
+            event['start']['timeZone'] = timezone
+        if new_end:
+            event['end']['dateTime'] = new_end
+            event['end']['timeZone'] = timezone
+        updated_event = service.events().update(calendarId='primary', eventId=event_id, body=event).execute()
         return f"Event updated: {updated_event.get('htmlLink')}"
     except Exception as e:
         return f"Failed to update event: {e}"

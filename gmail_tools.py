@@ -16,8 +16,8 @@ class SendGmailInput(BaseModel):
     body: str = Field(..., description="The body of the email.")
     attachments: Optional[List[str]] = Field(None, description="A list of local file paths to attach.")
 
-@tool
-def send_gmail(input_data: SendGmailInput) -> str:
+@tool(args_schema=SendGmailInput)
+def send_gmail(recipient: str, subject: str, body: str, attachments: Optional[List[str]] = None) -> str:
     """Send an email with optional attachments."""
     try:
         from email.mime.text import MIMEText
@@ -28,12 +28,12 @@ def send_gmail(input_data: SendGmailInput) -> str:
 
         service = get_gmail_service()
         message = MIMEMultipart()
-        message["to"] = input_data.recipient
-        message["subject"] = input_data.subject
-        message.attach(MIMEText(input_data.body, "plain"))
+        message["to"] = recipient
+        message["subject"] = subject
+        message.attach(MIMEText(body, "plain"))
 
-        if input_data.attachments:
-            for file_path in input_data.attachments:
+        if attachments:
+            for file_path in attachments:
                 with open(file_path, "rb") as f:
                     part = MIMEBase("application", "octet-stream")
                     part.set_payload(f.read())
@@ -53,15 +53,15 @@ class ReadGmailInput(BaseModel):
     query: str = Field("", description="The query to search for in emails.")
     max_results: int = Field(5, description="The maximum number of emails to return.")
 
-@tool
-def read_gmail(input_data: ReadGmailInput) -> str:
+@tool(args_schema=ReadGmailInput)
+def read_gmail(query: str = "", max_results: int = 5) -> str:
     """Read recent emails matching a query."""
     try:
         import base64
         from email import message_from_bytes
 
         service = get_gmail_service()
-        results = service.users().messages().list(userId="me", q=input_data.query, maxResults=input_data.max_results).execute()
+        results = service.users().messages().list(userId="me", q=query, maxResults=max_results).execute()
         messages = results.get("messages", [])
         if not messages:
             return "No emails found."
