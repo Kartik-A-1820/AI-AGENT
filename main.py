@@ -34,7 +34,7 @@ os.makedirs(AGENT_DIR, exist_ok=True)
 
 # Gemini LLM initialization
 llm = ChatGoogleGenerativeAI(
-    model="gemini-1.5-pro-latest",
+    model="gemini-2.5-pro",
     google_api_key=GEMINI_API_KEY
 )
 
