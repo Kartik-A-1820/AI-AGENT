@@ -14,7 +14,7 @@ from research_tools import research_topic
 from file_tools import AGENT_DIR, write_to_file, read_from_file
 from llm_config import create_llm
 from code_tools import install_python_package, run_python_code
-from personal_tools import add_personal_task, daily_brief, get_pc_status, list_personal_tasks, recall_context, remember, update_user_profile
+from personal_tools import add_personal_task, daily_brief, list_personal_tasks, recall_context, remember, update_user_profile
 
 
 TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
@@ -38,7 +38,6 @@ tools = [
     add_personal_task,
     list_personal_tasks,
     daily_brief,
-    get_pc_status,
     send_gmail,
     read_gmail,
     create_calendar_event,
@@ -65,6 +64,7 @@ You are a Python expert in a sandboxed environment.
 - Only read/write files inside `agent_working/`
 - Never access or modify anything outside that folder
 - Do NOT delete files
+- Do not perform disk cleanup, disk analysis, disk management, or storage optimization tasks.
 - Use `run_python_code` for coding work and `install_python_package` for venv-only pip installs.
 - Use tools for all file operations
 - To create a `.docx` file, you can import the `docx` library and use its functions.

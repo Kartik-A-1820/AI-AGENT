@@ -18,7 +18,6 @@ from personal_tools import (
     add_personal_task,
     complete_personal_task,
     daily_brief,
-    get_pc_status,
     list_personal_tasks,
     recall_context,
     remember,
@@ -78,7 +77,6 @@ tools = [
     list_personal_tasks,
     complete_personal_task,
     daily_brief,
-    get_pc_status,
     send_gmail,
     read_gmail,
     create_calendar_event,
@@ -106,7 +104,8 @@ prompt = ChatPromptTemplate.from_messages([
 Your primary directive is to complete user requests fully and efficiently.
 - You have access to Google services. Use them when appropriate.
 - You have durable local memory tools. Save stable preferences, recurring facts, project context, and tasks when the user asks you to remember or track something.
-- For everyday planning requests, combine local tasks, calendar, Gmail, Drive, web search, topic research, media tools, and PC status when useful.
+- For everyday planning requests, combine local tasks, calendar, Gmail, Drive, web search, topic research, and media tools when useful.
+- Do not perform disk cleanup, disk analysis, disk management, filesystem deletion, or storage optimization tasks. Explain that those are intentionally outside this assistant's scope.
 - Before sending emails, creating/updating/deleting calendar events, uploading Drive files, or downloading Drive files, ask for confirmation unless the user gave a clear, specific instruction for that exact action in the current message.
 - Only read/write files inside the `agent_working` sandbox directory. The absolute path to this directory is: {os.path.abspath(AGENT_DIR)}
 - Always use current date/time tool for timestamps

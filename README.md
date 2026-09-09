@@ -6,7 +6,7 @@ This project is a powerful, interactive AI agent that runs its main chat model t
 
 - **OmniRoute LLM Routing:** Powered by `ChatOpenAI` against OmniRoute's local endpoint, defaulting to `http://localhost:20128/v1` and model `auto`.
 - **Asynchronous Agent Runtime:** Uses LangChain `ainvoke`, async tools, background Streamlit jobs, bounded retries, and friendly error reporting so slow Google, research, and media calls do not freeze the assistant.
-- **Full-Time PC Assistant Mode:** Includes a Streamlit assistant console, one-click daily brief actions, local task tracking, durable memory, and safe PC status checks.
+- **Full-Time PC Assistant Mode:** Includes a Streamlit assistant console, one-click daily brief actions, local task tracking, and durable memory.
 - **D-Drive First Runtime Storage:** Memory, task data, Google tokens, caches, and the recommended virtual environment can live under `D:\AI` to keep the Windows system drive light.
 - **Project Sandbox For Outputs:** Generated files are constrained to `./agent_working` inside the AI-AGENT project folder.
 - **Extensive Toolset:** The agent is equipped with a rich set of tools, enabling it to interact with various services and perform complex actions:
@@ -20,7 +20,7 @@ This project is a powerful, interactive AI agent that runs its main chat model t
 - **Conversational Memory:** Maintains a summary of the conversation, allowing it to retain context over longer interactions.
 - **Durable Personal Memory:** Stores user preferences, project notes, and local tasks across sessions in JSON files under the assistant home directory.
 - **Cost Tracking:** Monitors token usage and can estimate cost when OmniRoute pricing env vars are provided.
-- **Secure and Sandboxed:** File tools, generated documents, generated media, and managed Python scripts are restricted to the `agent_working` directory to reduce accidental local file damage.
+- **Secure and Sandboxed:** File tools, generated documents, generated media, and managed Python scripts are restricted to the `agent_working` directory to reduce accidental local file damage. Disk cleanup, disk analysis, and storage-management tasks are intentionally outside the assistant's scope.
 
 ## Project Architecture
 
@@ -29,7 +29,7 @@ The agent's architecture is designed to be modular and extensible. Here's a brea
 - **`main.py`:** This is the heart of the application, containing the main chat loop, agent initialization, and tool configuration.
 - **`llm_config.py`:** Centralizes OmniRoute endpoint, model, timeout, temperature, API key, and optional pricing configuration.
 - **`assistant_state.py`:** Manages durable profile, memory, task, note, and workspace paths, defaulting to `D:\AI\assistant` on Windows.
-- **`personal_tools.py`:** Adds everyday assistant tools for memory, profile updates, task tracking, daily brief generation, and safe PC status.
+- **`personal_tools.py`:** Adds everyday assistant tools for memory, profile updates, task tracking, and daily brief generation.
 - **`research_tools.py`:** Adds async topic research with Tavily support and a lightweight search fallback, source fetching, citation prompts, and saved Markdown briefs.
 - **`media_tools.py`:** Adds async Omniroute media-model discovery plus image and video generation helpers with retries and sandboxed file output.
 - **`code_tools.py`:** Adds managed Python script execution and venv-only pip installation for coding tasks.
@@ -173,7 +173,7 @@ Here are some examples of how you can use the agent's tools:
 - **Track a task:**
   `"Add a high-priority task to review the AI-AGENT Omniroute migration tomorrow."`
 - **Get a daily brief:**
-  `"Give me my daily brief with tasks, calendar, email, and PC status."`
+  `"Give me my daily brief with tasks, calendar, and email."`
 
 ## How to Contribute
 

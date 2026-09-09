@@ -1,12 +1,7 @@
-import os
-import shutil
-from datetime import datetime
-
 from langchain.tools import tool
 from pydantic import BaseModel, Field
 
 from assistant_state import (
-    ASSISTANT_HOME,
     add_task as store_task,
     append_memory,
     complete_task as mark_task_done,
@@ -91,31 +86,9 @@ def complete_personal_task(task_id: str) -> str:
     return f"No task found with ID {task_id}."
 
 
-def build_pc_status() -> str:
-    drives = []
-    if os.name == "nt":
-        for letter in "CDEFG":
-            root = f"{letter}:\\"
-            if os.path.exists(root):
-                usage = shutil.disk_usage(root)
-                drives.append(
-                    f"{root} free {usage.free / (1024 ** 3):.1f} GB of {usage.total / (1024 ** 3):.1f} GB"
-                )
-    else:
-        usage = shutil.disk_usage("/")
-        drives.append(f"/ free {usage.free / (1024 ** 3):.1f} GB of {usage.total / (1024 ** 3):.1f} GB")
-    return f"Assistant home: {ASSISTANT_HOME}\nChecked at: {datetime.now().isoformat(timespec='seconds')}\n" + "\n".join(drives)
-
-
-@tool
-def get_pc_status() -> str:
-    """Get safe local PC status including disk space and assistant storage location."""
-    return build_pc_status()
-
-
 @tool
 def daily_brief() -> str:
-    """Create a local daily brief from profile, open tasks, recent memories, and PC status."""
+    """Create a local daily brief from profile, open tasks, and recent memories."""
     profile = get_profile()
     tasks = [task for task in load_tasks() if task.get("status") != "done"]
     memories = recent_memories(limit=5)
@@ -136,6 +109,4 @@ def daily_brief() -> str:
     lines.extend(f"- {memory.get('content', '')}" for memory in memories)
     if not memories:
         lines.append("- No recent stored memories.")
-    lines.append("")
-    lines.append(build_pc_status())
     return "\n".join(lines)

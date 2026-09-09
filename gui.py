@@ -55,11 +55,9 @@ with st.sidebar:
     st.divider()
     quick_prompt = None
     if st.button("Daily brief", use_container_width=True):
-        quick_prompt = "Give me my daily brief. Include local tasks, calendar events, recent important email, and PC status."
+        quick_prompt = "Give me my daily brief. Include local tasks, calendar events, and recent important email."
     if st.button("Open tasks", use_container_width=True):
         quick_prompt = "List my open local tasks and suggest what I should do next."
-    if st.button("PC status", use_container_width=True):
-        quick_prompt = "Check my PC status and tell me if anything needs attention."
     if st.button("Recent context", use_container_width=True):
         quick_prompt = "Recall my saved profile and recent durable memories."
     if st.button("Topic research", use_container_width=True):
