@@ -6,8 +6,7 @@ from io import BytesIO
 import os
 import json
 import time
-
-AGENT_DIR = "agent_working"
+from file_tools import AGENT_DIR, _safe_agent_path
 
 @tool
 def generate_image_from_prompt(prompt: str, filename: str = "output.png") -> str:
@@ -38,7 +37,7 @@ def generate_image_from_prompt(prompt: str, filename: str = "output.png") -> str
                 filename += ".png"
 
             os.makedirs(os.path.join(AGENT_DIR, "images"), exist_ok=True)
-            path = os.path.join(AGENT_DIR, "images", filename)
+            path = _safe_agent_path(os.path.join("images", filename))
 
             for part in resp.candidates[0].content.parts:
                 if part.inline_data:

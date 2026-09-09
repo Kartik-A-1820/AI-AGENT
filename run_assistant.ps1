@@ -8,7 +8,7 @@ if (-not $env:AI_AGENT_HOME) {
     $env:AI_AGENT_HOME = "D:\AI\assistant"
 }
 if (-not $env:AI_AGENT_WORKSPACE) {
-    $env:AI_AGENT_WORKSPACE = "D:\AI\assistant\workspace"
+    $env:AI_AGENT_WORKSPACE = Join-Path $projectRoot "agent_working"
 }
 
 New-Item -ItemType Directory -Force -Path $env:AI_AGENT_HOME, $env:AI_AGENT_WORKSPACE | Out-Null

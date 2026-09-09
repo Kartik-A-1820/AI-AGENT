@@ -7,14 +7,13 @@ from docx import Document
 from docx.shared import Inches
 import os
 from image_generation_tools import generate_image_from_prompt
+from file_tools import AGENT_DIR, _safe_agent_path
 
 class DocxContent(BaseModel):
     text: str = Field(..., description="A paragraph of text for the document.")
     image_path: Optional[str] = Field(None, description="The local path to an image to include with the paragraph.")
     image_prompt: Optional[str] = Field(None, description="A prompt to generate a relevant image for the paragraph.")
 
-
-AGENT_DIR = "agent_working"
 
 class SlideData(BaseModel):
     title: str = Field(..., description="The title of the slide.")
@@ -83,7 +82,7 @@ def create_pptx_presentation(
             )
 
     # 5) Save & return confirmation
-    out_path = os.path.join(AGENT_DIR, output_filename)
+    out_path = _safe_agent_path(output_filename)
     prs.save(out_path)
     return f"✅ Presentation saved to {out_path}"
 
@@ -110,7 +109,7 @@ def create_docx_document(title: str, content: List[DocxContent], output_filename
         if item.image_path and os.path.exists(item.image_path):
             document.add_picture(item.image_path, width=Inches(5.0))
 
-    output_path = os.path.join(AGENT_DIR, output_filename)
+    output_path = _safe_agent_path(output_filename)
     document.save(output_path)
     return f"✅ Document saved to {output_path}"
 

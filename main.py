@@ -4,7 +4,6 @@ import tiktoken
 from langchain_tavily import TavilySearch
 from langchain.agents import AgentExecutor, create_tool_calling_agent
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_experimental.tools.python.tool import PythonREPLTool
 from langchain.tools import tool
 from gmail_tools import send_gmail, read_gmail
 from calender_tools import create_calendar_event, list_calendar_events, delete_calendar_event, update_calendar_event, schedule_google_meet_event
@@ -14,6 +13,7 @@ from document_tools import create_pptx_presentation, create_docx_document
 from pydantic import BaseModel, Field
 from file_tools import AGENT_DIR, write_to_file, read_from_file
 from llm_config import create_llm, estimate_llm_cost
+from code_tools import install_python_package, run_python_code
 from personal_tools import (
     add_personal_task,
     complete_personal_task,
@@ -63,12 +63,12 @@ def get_current_date_time(input_data: GetCurrentDateTimeInput) -> str:
 
 # --- Other tools ---
 search_tool = TavilySearch(tavily_api_key=TAVILY_API_KEY, max_results=5) if TAVILY_API_KEY else None
-python_tool = PythonREPLTool()
 
 # --- All Tools ---
 tools = [
     get_current_date_time,
-    python_tool,
+    run_python_code,
+    install_python_package,
     write_to_file,
     read_from_file,
     remember,
@@ -102,18 +102,20 @@ if search_tool:
 
 # Prompt
 prompt = ChatPromptTemplate.from_messages([
-    ("system", f"""You are a full-time personal PC assistant powered by OmniRoute with tools for Google Workspace, local task memory, safe file creation, web search when configured, and a Python REPL.
+    ("system", f"""You are a full-time personal PC assistant powered by OmniRoute with tools for Google Workspace, local task memory, safe file creation, web search when configured, and sandboxed Python coding tools.
 Your primary directive is to complete user requests fully and efficiently.
 - You have access to Google services. Use them when appropriate.
 - You have durable local memory tools. Save stable preferences, recurring facts, project context, and tasks when the user asks you to remember or track something.
 - For everyday planning requests, combine local tasks, calendar, Gmail, Drive, web search, topic research, media tools, and PC status when useful.
 - Before sending emails, creating/updating/deleting calendar events, uploading Drive files, or downloading Drive files, ask for confirmation unless the user gave a clear, specific instruction for that exact action in the current message.
-- Only read/write files inside the `agent_working` directory. The absolute path to this directory is: {os.path.abspath(AGENT_DIR)}
+- Only read/write files inside the `agent_working` sandbox directory. The absolute path to this directory is: {os.path.abspath(AGENT_DIR)}
 - Always use current date/time tool for timestamps
 - Never access or modify anything outside that folder
-- Do NOT delete files
+- Do NOT delete files, even inside the sandbox, unless the user explicitly asks for that exact sandbox file deletion.
+- Use `run_python_code` for coding tasks instead of an unrestricted REPL. Scripts run from the sandbox directory.
+- Use `install_python_package` when a task needs a pip package. It installs only into the assistant's dedicated virtual environment.
 - Use required tools for tasks intelligently.
-- You can perform any task using Python. If a specific tool is not available, write and execute Python code to accomplish the task. Never say you don't have access or can't do something; instead, provide the Python code to solve the problem.
+- You can perform many tasks using Python in the sandbox. If a specific tool is not available, write and execute Python code with `run_python_code` while keeping all files inside the sandbox.
 - When creating a presentation, generate detailed and informative content for each slide. Go beyond simple bullet points; provide descriptive and well-structured text.
 - For topic research, use `research_topic` to create a cited brief and save sources before drafting documents, recommendations, or content plans.
 - Prefer Omniroute media generation tools for images and videos. Use `list_omniroute_media_models` when the user asks what is available.

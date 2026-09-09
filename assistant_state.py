@@ -6,13 +6,14 @@ from typing import Any
 from uuid import uuid4
 
 
+PROJECT_ROOT = Path(__file__).resolve().parent
 DEFAULT_HOME = r"D:\AI\assistant" if os.name == "nt" else os.path.expanduser("~/AI/assistant")
 ASSISTANT_HOME = Path(os.getenv("AI_AGENT_HOME", DEFAULT_HOME)).expanduser()
 PROFILE_PATH = ASSISTANT_HOME / "profile.json"
 MEMORY_PATH = ASSISTANT_HOME / "memory.jsonl"
 TASKS_PATH = ASSISTANT_HOME / "tasks.json"
 NOTES_DIR = ASSISTANT_HOME / "notes"
-WORKSPACE_DIR = Path(os.getenv("AI_AGENT_WORKSPACE", str(ASSISTANT_HOME / "workspace"))).expanduser()
+WORKSPACE_DIR = Path(os.getenv("AI_AGENT_WORKSPACE", str(PROJECT_ROOT / "agent_working"))).expanduser()
 
 
 def ensure_assistant_home() -> None:

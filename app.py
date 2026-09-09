@@ -5,7 +5,6 @@ from langchain_tavily import TavilySearch
 from langchain.agents import AgentExecutor
 from langchain.agents import create_tool_calling_agent
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_experimental.tools.python.tool import PythonREPLTool
 from gmail_tools import send_gmail, read_gmail
 from calender_tools import create_calendar_event, list_calendar_events, delete_calendar_event, update_calendar_event, schedule_google_meet_event
 from gdrive_tools import upload_drive_file, download_drive_file, list_drive_files
@@ -14,6 +13,7 @@ from media_tools import generate_omniroute_image, generate_omniroute_video, list
 from research_tools import research_topic
 from file_tools import AGENT_DIR, write_to_file, read_from_file
 from llm_config import create_llm
+from code_tools import install_python_package, run_python_code
 from personal_tools import add_personal_task, daily_brief, get_pc_status, list_personal_tasks, recall_context, remember, update_user_profile
 
 
@@ -27,9 +27,9 @@ llm = create_llm()
 # If you prefer only URLs, use `TavilySearchResultsJson`.
 search_tool = TavilySearch(tavily_api_key=TAVILY_API_KEY, max_results=5) if TAVILY_API_KEY else None
 
-python_tool = PythonREPLTool()
 tools = [
-    python_tool,
+    run_python_code,
+    install_python_package,
     write_to_file,
     read_from_file,
     remember,
@@ -65,6 +65,7 @@ You are a Python expert in a sandboxed environment.
 - Only read/write files inside `agent_working/`
 - Never access or modify anything outside that folder
 - Do NOT delete files
+- Use `run_python_code` for coding work and `install_python_package` for venv-only pip installs.
 - Use tools for all file operations
 - To create a `.docx` file, you can import the `docx` library and use its functions.
 - To create a `.pptx` file, you can import the `pptx` library and use its functions.
