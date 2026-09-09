@@ -11,6 +11,7 @@ DEFAULT_HOME = r"D:\AI\assistant" if os.name == "nt" else os.path.expanduser("~/
 ASSISTANT_HOME = Path(os.getenv("AI_AGENT_HOME", DEFAULT_HOME)).expanduser()
 PROFILE_PATH = ASSISTANT_HOME / "profile.json"
 MEMORY_PATH = ASSISTANT_HOME / "memory.jsonl"
+GRAPH_PATH = ASSISTANT_HOME / "knowledge_graph.json"
 TASKS_PATH = ASSISTANT_HOME / "tasks.json"
 NOTES_DIR = ASSISTANT_HOME / "notes"
 WORKSPACE_DIR = Path(os.getenv("AI_AGENT_WORKSPACE", str(PROJECT_ROOT / "agent_working"))).expanduser()
@@ -93,6 +94,21 @@ def recent_memories(limit: int = 12) -> list[dict[str, Any]]:
         except json.JSONDecodeError:
             continue
     return memories
+
+
+def load_knowledge_graph() -> dict[str, Any]:
+    graph = _load_json(GRAPH_PATH, {"nodes": {}, "edges": [], "updated_at": now_iso()})
+    if not isinstance(graph, dict):
+        return {"nodes": {}, "edges": [], "updated_at": now_iso()}
+    graph.setdefault("nodes", {})
+    graph.setdefault("edges", [])
+    graph.setdefault("updated_at", now_iso())
+    return graph
+
+
+def save_knowledge_graph(graph: dict[str, Any]) -> None:
+    graph["updated_at"] = now_iso()
+    _save_json(GRAPH_PATH, graph)
 
 
 def load_tasks() -> list[dict[str, Any]]:

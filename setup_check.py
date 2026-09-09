@@ -4,7 +4,7 @@ from pathlib import Path
 import requests
 from dotenv import load_dotenv
 
-from assistant_state import ASSISTANT_HOME, WORKSPACE_DIR, ensure_assistant_home
+from assistant_state import ASSISTANT_HOME, GRAPH_PATH, WORKSPACE_DIR, ensure_assistant_home
 
 
 def status(name: str, ok: bool, detail: str) -> None:
@@ -22,6 +22,7 @@ def main() -> int:
 
     status("assistant home", ASSISTANT_HOME.exists(), str(ASSISTANT_HOME))
     status("assistant workspace", WORKSPACE_DIR.exists(), str(WORKSPACE_DIR))
+    status("local knowledge graph", GRAPH_PATH.parent.exists(), str(GRAPH_PATH))
     status("Google OAuth client", credentials_path.exists(), str(credentials_path))
     status("Google token", token_path.exists(), str(token_path))
     status("Tavily web search", bool(os.getenv("TAVILY_API_KEY")), "configured" if os.getenv("TAVILY_API_KEY") else "optional, not configured")

@@ -19,10 +19,13 @@ from personal_tools import (
     complete_personal_task,
     daily_brief,
     list_personal_tasks,
+    recall_graph_context,
     recall_context,
     remember,
+    remember_graph_fact,
     update_user_profile,
 )
+from graph_memory import format_graph_context, update_graph_from_interaction_async
 from media_tools import (
     generate_omniroute_image,
     generate_omniroute_video,
@@ -71,7 +74,9 @@ tools = [
     write_to_file,
     read_from_file,
     remember,
+    remember_graph_fact,
     recall_context,
+    recall_graph_context,
     update_user_profile,
     add_personal_task,
     list_personal_tasks,
@@ -103,7 +108,8 @@ prompt = ChatPromptTemplate.from_messages([
     ("system", f"""You are a full-time personal PC assistant powered by OmniRoute with tools for Google Workspace, local task memory, safe file creation, web search when configured, and sandboxed Python coding tools.
 Your primary directive is to complete user requests fully and efficiently.
 - You have access to Google services. Use them when appropriate.
-- You have durable local memory tools. Save stable preferences, recurring facts, project context, and tasks when the user asks you to remember or track something.
+- You have durable local memory and local knowledge graph tools. Save stable preferences, recurring facts, relationships, project context, and tasks when they will improve future assistance.
+- A compact local knowledge graph context may be prepended to user requests. Use it quietly for continuity, personalization, and lower token usage.
 - For everyday planning requests, combine local tasks, calendar, Gmail, Drive, web search, topic research, and media tools when useful.
 - Do not perform disk cleanup, disk analysis, disk management, filesystem deletion, or storage optimization tasks. Explain that those are intentionally outside this assistant's scope.
 - Before sending emails, creating/updating/deleting calendar events, uploading Drive files, or downloading Drive files, ask for confirmation unless the user gave a clear, specific instruction for that exact action in the current message.
@@ -159,6 +165,8 @@ def summarize_history():
 
 
 async def get_agent_response_async(user_input, chat_history):
+    graph_context = format_graph_context(user_input, limit=8)
+    contextual_input = f"{graph_context}\n\nCurrent user request:\n{user_input}"
     agent = create_tool_calling_agent(
         llm=llm,
         tools=tools,
@@ -171,12 +179,18 @@ async def get_agent_response_async(user_input, chat_history):
         handle_parsing_errors=True,
         max_iterations=12,
     )
-    result = await agent_executor.ainvoke({"input": user_input, "chat_history": chat_history})
+    result = await agent_executor.ainvoke({"input": contextual_input, "chat_history": chat_history})
     response = result["output"]
     
     prompt_tokens = count_tokens(user_input)
     completion_tokens = count_tokens(response)
     cost = get_cost(prompt_tokens, completion_tokens)
+
+    try:
+        await update_graph_from_interaction_async(user_input, response)
+    except Exception as exc:
+        if os.getenv("AI_AGENT_VERBOSE", "false").lower() == "true":
+            print(f"[Graph Memory Error] {exc}")
 
     return response, prompt_tokens, completion_tokens, cost
 

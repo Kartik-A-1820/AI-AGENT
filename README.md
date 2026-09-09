@@ -6,7 +6,7 @@ This project is a powerful, interactive AI agent that runs its main chat model t
 
 - **OmniRoute LLM Routing:** Powered by `ChatOpenAI` against OmniRoute's local endpoint, defaulting to `http://localhost:20128/v1` and model `auto`.
 - **Asynchronous Agent Runtime:** Uses LangChain `ainvoke`, async tools, background Streamlit jobs, bounded retries, and friendly error reporting so slow Google, research, and media calls do not freeze the assistant.
-- **Full-Time PC Assistant Mode:** Includes a Streamlit assistant console, one-click daily brief actions, local task tracking, and durable memory.
+- **Full-Time PC Assistant Mode:** Includes a Streamlit assistant console, one-click daily brief actions, local task tracking, durable memory, and local graph memory.
 - **D-Drive First Runtime Storage:** Memory, task data, Google tokens, caches, and the recommended virtual environment can live under `D:\AI` to keep the Windows system drive light.
 - **Project Sandbox For Outputs:** Generated files are constrained to `./agent_working` inside the AI-AGENT project folder.
 - **Extensive Toolset:** The agent is equipped with a rich set of tools, enabling it to interact with various services and perform complex actions:
@@ -19,6 +19,7 @@ This project is a powerful, interactive AI agent that runs its main chat model t
     - **File Management:** Can read and write files within a sandboxed assistant workspace.
 - **Conversational Memory:** Maintains a summary of the conversation, allowing it to retain context over longer interactions.
 - **Durable Personal Memory:** Stores user preferences, project notes, and local tasks across sessions in JSON files under the assistant home directory.
+- **Local Knowledge Graph Memory:** Stores compact entities and relationships in `knowledge_graph.json` under the assistant home directory. OmniRoute is used as a local extraction pipeline after each turn, while the graph itself stays fully local and free.
 - **Cost Tracking:** Monitors token usage and can estimate cost when OmniRoute pricing env vars are provided.
 - **Secure and Sandboxed:** File tools, generated documents, generated media, and managed Python scripts are restricted to the `agent_working` directory to reduce accidental local file damage. Disk cleanup, disk analysis, and storage-management tasks are intentionally outside the assistant's scope.
 
@@ -29,7 +30,8 @@ The agent's architecture is designed to be modular and extensible. Here's a brea
 - **`main.py`:** This is the heart of the application, containing the main chat loop, agent initialization, and tool configuration.
 - **`llm_config.py`:** Centralizes OmniRoute endpoint, model, timeout, temperature, API key, and optional pricing configuration.
 - **`assistant_state.py`:** Manages durable profile, memory, task, note, and workspace paths, defaulting to `D:\AI\assistant` on Windows.
-- **`personal_tools.py`:** Adds everyday assistant tools for memory, profile updates, task tracking, and daily brief generation.
+- **`graph_memory.py`:** Maintains the local JSON knowledge graph, relevant-context lookup, and OmniRoute-powered graph extraction pipeline.
+- **`personal_tools.py`:** Adds everyday assistant tools for memory, graph facts, profile updates, task tracking, and daily brief generation.
 - **`research_tools.py`:** Adds async topic research with Tavily support and a lightweight search fallback, source fetching, citation prompts, and saved Markdown briefs.
 - **`media_tools.py`:** Adds async Omniroute media-model discovery plus image and video generation helpers with retries and sandboxed file output.
 - **`code_tools.py`:** Adds managed Python script execution and venv-only pip installation for coding tasks.
@@ -125,6 +127,16 @@ powershell -ExecutionPolicy Bypass -File .\run_assistant.ps1
 
 This uses `D:\AI\venvs\ai-agent` for Python packages and `D:\AI\assistant` for assistant data by default.
 
+## Local Memory And Context
+
+The assistant keeps three local memory layers:
+
+- Recent chat summary for short-term continuity.
+- Durable JSONL memories and tasks for explicit notes, preferences, and plans.
+- A local knowledge graph for compact relationships such as projects, preferred tools, recurring goals, avoided actions, services used, and decisions.
+
+Before each request, the runtime queries the local graph and prepends only the most relevant compact context. After each response, OmniRoute extracts small graph updates from the exchange and stores them locally. If extraction fails, the assistant keeps working and falls back to simple local extraction. This is designed to improve context awareness and reduce repeated token-heavy reminders without needing a hosted graph database.
+
 **Launch On Windows Login:**
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\install_windows_startup.ps1
@@ -170,6 +182,8 @@ Here are some examples of how you can use the agent's tools:
   `"Generate an image of a clean desktop productivity dashboard using a free Omniroute image route."`
 - **Save durable context:**
   `"Remember that I prefer concise daily planning and that my AI project workspace is on D drive."`
+- **Save graph context:**
+  `"Remember as graph memory that AI-AGENT uses OmniRoute for long-running local assistant tasks."`
 - **Track a task:**
   `"Add a high-priority task to review the AI-AGENT Omniroute migration tomorrow."`
 - **Get a daily brief:**

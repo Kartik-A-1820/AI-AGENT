@@ -10,6 +10,7 @@ from assistant_state import (
     recent_memories,
     update_profile_field,
 )
+from graph_memory import add_graph_fact, format_graph_context
 
 
 class RememberInput(BaseModel):
@@ -22,6 +23,42 @@ def remember(content: str, kind: str = "note") -> str:
     """Store a durable memory for future assistant sessions."""
     entry = append_memory(kind=kind, content=content)
     return f"Remembered {entry['kind']} memory {entry['id']}."
+
+
+class GraphFactInput(BaseModel):
+    subject: str = Field(..., description="The source entity, project, preference, person, or concept.")
+    relation: str = Field(..., description="Relationship such as prefers, uses, works_on, needs, avoids, or related_to.")
+    object_value: str = Field(..., description="The target entity, project, preference, person, or concept.")
+    subject_type: str = Field("concept", description="Type for the subject node.")
+    object_type: str = Field("concept", description="Type for the target node.")
+    evidence: str = Field("", description="Short reason or evidence for this graph fact.")
+
+
+@tool(args_schema=GraphFactInput)
+def remember_graph_fact(
+    subject: str,
+    relation: str,
+    object_value: str,
+    subject_type: str = "concept",
+    object_type: str = "concept",
+    evidence: str = "",
+) -> str:
+    """Store one local knowledge graph relationship for future context."""
+    edge = add_graph_fact(
+        subject=subject,
+        relation=relation,
+        object_value=object_value,
+        subject_type=subject_type,
+        object_type=object_type,
+        evidence=evidence,
+    )
+    return f"Graph memory stored: {edge['source']} {edge['relation']} {edge['target']}."
+
+
+@tool
+def recall_graph_context(query: str, limit: int = 8) -> str:
+    """Recall relevant local knowledge graph context for a query."""
+    return format_graph_context(query=query, limit=limit)
 
 
 class ProfileInput(BaseModel):
@@ -41,14 +78,15 @@ def update_user_profile(field: str, value: str) -> str:
 
 @tool
 def recall_context(limit: int = 12) -> str:
-    """Recall the user's profile and recent durable memories."""
+    """Recall the user's profile, recent durable memories, and graph memory."""
     profile = get_profile()
     memories = recent_memories(limit=limit)
     memory_text = "\n".join(
         f"- [{item.get('kind', 'note')}] {item.get('content', '')} ({item.get('created_at', '')})"
         for item in memories
     )
-    return f"Profile:\n{profile}\n\nRecent memories:\n{memory_text or 'No stored memories yet.'}"
+    graph_text = format_graph_context(query=" ".join(item.get("content", "") for item in memories), limit=limit)
+    return f"Profile:\n{profile}\n\nRecent memories:\n{memory_text or 'No stored memories yet.'}\n\n{graph_text}"
 
 
 class TaskInput(BaseModel):
@@ -88,7 +126,7 @@ def complete_personal_task(task_id: str) -> str:
 
 @tool
 def daily_brief() -> str:
-    """Create a local daily brief from profile, open tasks, and recent memories."""
+    """Create a local daily brief from profile, open tasks, recent memories, and graph context."""
     profile = get_profile()
     tasks = [task for task in load_tasks() if task.get("status") != "done"]
     memories = recent_memories(limit=5)
@@ -109,4 +147,6 @@ def daily_brief() -> str:
     lines.extend(f"- {memory.get('content', '')}" for memory in memories)
     if not memories:
         lines.append("- No recent stored memories.")
+    lines.append("")
+    lines.append(format_graph_context(query="daily brief priorities preferences projects tasks", limit=6))
     return "\n".join(lines)

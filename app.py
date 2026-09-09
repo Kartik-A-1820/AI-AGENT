@@ -14,7 +14,16 @@ from research_tools import research_topic
 from file_tools import AGENT_DIR, write_to_file, read_from_file
 from llm_config import create_llm
 from code_tools import install_python_package, run_python_code
-from personal_tools import add_personal_task, daily_brief, list_personal_tasks, recall_context, remember, update_user_profile
+from personal_tools import (
+    add_personal_task,
+    daily_brief,
+    list_personal_tasks,
+    recall_graph_context,
+    recall_context,
+    remember,
+    remember_graph_fact,
+    update_user_profile,
+)
 
 
 TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
@@ -33,7 +42,9 @@ tools = [
     write_to_file,
     read_from_file,
     remember,
+    remember_graph_fact,
     recall_context,
+    recall_graph_context,
     update_user_profile,
     add_personal_task,
     list_personal_tasks,
@@ -66,6 +77,7 @@ You are a Python expert in a sandboxed environment.
 - Do NOT delete files
 - Do not perform disk cleanup, disk analysis, disk management, or storage optimization tasks.
 - Use `run_python_code` for coding work and `install_python_package` for venv-only pip installs.
+- Use durable memory and local graph memory for stable preferences, recurring facts, relationships, projects, and useful context.
 - Use tools for all file operations
 - To create a `.docx` file, you can import the `docx` library and use its functions.
 - To create a `.pptx` file, you can import the `pptx` library and use its functions.
