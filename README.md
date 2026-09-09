@@ -2,6 +2,8 @@
 
 This project is a powerful, interactive AI agent that runs its main chat model through a local OmniRoute OpenAI-compatible endpoint. OmniRoute can route and fail over across providers behind one local API, giving the agent longer, more flexible AI usage without hardcoding a single hosted provider. The agent can be controlled through a command-line interface (CLI) or a Streamlit-based graphical user interface (GUI).
 
+![OmniRoute Powered AI Agent architecture](docs/assets/architecture-diagram.png)
+
 ## Key Features
 
 - **OmniRoute LLM Routing:** Powered by `ChatOpenAI` against OmniRoute's local endpoint, defaulting to `http://localhost:20128/v1` and model `auto`.
@@ -188,6 +190,28 @@ Here are some examples of how you can use the agent's tools:
   `"Add a high-priority task to review the AI-AGENT Omniroute migration tomorrow."`
 - **Get a daily brief:**
   `"Give me my daily brief with tasks, calendar, and email."`
+
+## Tested Local Capabilities And Prompts
+
+These prompts and capabilities were manually tested on Windows using the dedicated D-drive virtual environment at `D:\AI\venvs\ai-agent`. Generated files stayed inside `F:\AI-AGENT\agent_working`.
+
+| Capability | Working prompt | Verified result |
+| --- | --- | --- |
+| Word document generation | `Create a short Word document named capability_test.docx titled Local Assistant Capability Test with two concise paragraphs about sandboxed document creation and graph memory. Do not include images.` | Created `agent_working/capability_test.docx`. |
+| PowerPoint generation | `Create a 3-slide PowerPoint named capability_test.pptx about AI-AGENT everyday assistant capabilities. Include slides for Memory, Research, and Document Creation. Do not include images.` | Created `agent_working/capability_test.pptx`. |
+| Sandboxed file creation | `Use Python to create a CSV named capability_metrics.csv with columns capability,status and rows graph memory,working; docx generation,working; pptx generation,working.` | Created and read back `agent_working/capability_metrics.csv`. |
+| Graph memory recall | `Recall graph context for AI-AGENT memory and sandboxed document creation. Answer in two concise bullets.` | Returned relevant graph context from `D:\AI\assistant\knowledge_graph.json`. |
+| Explicit graph memory | `Remember as graph memory that AI-AGENT should prioritize sandboxed document creation for everyday users.` | Stored a local graph relationship for future context. |
+
+Good everyday prompts to try:
+
+- `Give me my daily brief with tasks, calendar, and recent important email.`
+- `Research whether local AI assistants are useful for students. Create a standard brief with sources.`
+- `Create a PowerPoint deck from this outline and save it in the workspace.`
+- `Create a Word document with a polished summary and save it as a .docx file.`
+- `Use Python in the sandbox to analyze this CSV and create a chart.`
+- `Remember this project preference as graph memory: keep generated files inside the AI-AGENT sandbox.`
+- `Recall relevant graph context before planning my next AI-AGENT improvement.`
 
 ## How to Contribute
 

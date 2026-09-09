@@ -56,6 +56,13 @@ def _tokens(text: str) -> set[str]:
     }
 
 
+def _is_displayable_text(value: str) -> bool:
+    text = str(value)
+    if not text:
+        return False
+    return all(ord(char) < 128 for char in text)
+
+
 def _trim_evidence(items: list[str]) -> list[str]:
     compact = []
     for item in items:
@@ -228,7 +235,9 @@ def format_graph_context(query: str, limit: int = 8, max_chars: int = 1800) -> s
     all_nodes = load_knowledge_graph().get("nodes", {})
     lines = ["Relevant local knowledge graph context:"]
     for node in result["nodes"]:
-        evidence = "; ".join(node.get("evidence", [])[-2:])
+        if not _is_displayable_text(node.get("name", "")):
+            continue
+        evidence = "; ".join(item for item in node.get("evidence", [])[-2:] if _is_displayable_text(item))
         detail = f" - {node.get('name')} ({node.get('type', 'concept')})"
         if evidence:
             detail += f": {evidence}"
@@ -237,7 +246,7 @@ def format_graph_context(query: str, limit: int = 8, max_chars: int = 1800) -> s
     for edge in result["edges"]:
         source = nodes.get(edge.get("source")) or all_nodes.get(edge.get("source"), {})
         target = nodes.get(edge.get("target")) or all_nodes.get(edge.get("target"), {})
-        if source and target:
+        if source and target and _is_displayable_text(source.get("name", "")) and _is_displayable_text(target.get("name", "")):
             lines.append(
                 f" - {source.get('name')} {edge.get('relation')} {target.get('name')} "
                 f"(confidence {edge.get('confidence', 0.7)})"
@@ -279,6 +288,7 @@ async def extract_graph_updates_async(user_input: str, assistant_response: str) 
 Extract durable memory for a local personal assistant knowledge graph.
 Only include stable user preferences, projects, people, tools, recurring facts, decisions, and useful context.
 Ignore transient wording, secrets, API keys, one-time command output, and unsafe disk-management details.
+Use English labels and relations, even if the transcript contains mixed-language text.
 Return strict JSON with:
 {
   "nodes": [{"name": "...", "type": "person|project|preference|tool|service|task|concept", "evidence": "..."}],
