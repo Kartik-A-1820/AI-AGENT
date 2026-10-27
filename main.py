@@ -13,7 +13,7 @@ from document_tools import create_pptx_presentation, create_docx_document
 from pydantic import BaseModel, Field
 from file_tools import AGENT_DIR, write_to_file, read_from_file
 from llm_config import create_llm, estimate_llm_cost
-from code_tools import install_python_package, run_python_code
+from code_tools import run_python_code
 from personal_tools import (
     add_personal_task,
     complete_personal_task,
@@ -69,8 +69,6 @@ search_tool = TavilySearch(tavily_api_key=TAVILY_API_KEY, max_results=5) if TAVI
 # --- All Tools ---
 tools = [
     get_current_date_time,
-    run_python_code,
-    install_python_package,
     write_to_file,
     read_from_file,
     remember,
@@ -100,6 +98,8 @@ tools = [
     create_pptx_presentation,
     create_docx_document,
 ]
+if os.getenv('AI_AGENT_ENABLE_CODE', '').lower() == 'true':
+    tools.append(run_python_code)
 if search_tool:
     tools.append(search_tool)
 
@@ -117,8 +117,8 @@ Your primary directive is to complete user requests fully and efficiently.
 - Always use current date/time tool for timestamps
 - Never access or modify anything outside that folder
 - Do NOT delete files, even inside the sandbox, unless the user explicitly asks for that exact sandbox file deletion.
-- Use `run_python_code` for coding tasks instead of an unrestricted REPL. Scripts run from the sandbox directory.
-- Use `install_python_package` when a task needs a pip package. It installs only into the assistant's dedicated virtual environment.
+- Use `run_python_code` for coding tasks instead of an unrestricted REPL. Each job runs inside a restricted Docker container with only explicitly selected inputs; outputs are saved in its reported job directory.
+- Runtime package installation is disabled. Dependencies must already exist in the owner-prepared Docker image.
 - Use required tools for tasks intelligently.
 - You can perform many tasks using Python in the sandbox. If a specific tool is not available, write and execute Python code with `run_python_code` while keeping all files inside the sandbox.
 - When creating a presentation, generate detailed and informative content for each slide. Go beyond simple bullet points; provide descriptive and well-structured text.
