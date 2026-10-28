@@ -1,7 +1,7 @@
 [project]
 name = "ai-agent"
 version = "0.1.0"
-description = "Add your description here"
+description = "Asynchronous tool-using assistant with local memory and optional isolated Python execution"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

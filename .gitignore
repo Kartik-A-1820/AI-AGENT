@@ -12,3 +12,6 @@ __pycache__/
 
 # Agent's working directory
 agent_working/
+
+# Local memory and OAuth state
+.local/
