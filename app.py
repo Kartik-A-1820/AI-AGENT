@@ -13,7 +13,7 @@ from media_tools import generate_omniroute_image, generate_omniroute_video, list
 from research_tools import research_topic
 from file_tools import AGENT_DIR, write_to_file, read_from_file
 from llm_config import create_llm
-from code_tools import install_python_package, run_python_code
+from code_tools import run_python_code
 from personal_tools import (
     add_personal_task,
     daily_brief,
@@ -37,8 +37,6 @@ llm = create_llm()
 search_tool = TavilySearch(tavily_api_key=TAVILY_API_KEY, max_results=5) if TAVILY_API_KEY else None
 
 tools = [
-    run_python_code,
-    install_python_package,
     write_to_file,
     read_from_file,
     remember,
@@ -65,18 +63,20 @@ tools = [
     generate_omniroute_video,
     research_topic,
 ]
+if os.getenv('AI_AGENT_ENABLE_CODE', '').lower() == 'true':
+    tools.append(run_python_code)
 if search_tool:
     tools.append(search_tool)
 
 # 5) ── Build a function-calling agent --------------------------------------------
 prompt = ChatPromptTemplate.from_messages([
     ("system",         """
-You are a Python expert in a sandboxed environment.
+You are a Python assistant. Code execution is disabled unless the owner configures the isolated Docker runner.
 - Only read/write files inside `agent_working/`
 - Never access or modify anything outside that folder
 - Do NOT delete files
 - Do not perform disk cleanup, disk analysis, disk management, or storage optimization tasks.
-- Use `run_python_code` for coding work and `install_python_package` for venv-only pip installs.
+- When enabled, use `run_python_code` for isolated Docker execution. Package installation is disabled.
 - Use durable memory and local graph memory for stable preferences, recurring facts, relationships, projects, and useful context.
 - Use tools for all file operations
 - To create a `.docx` file, you can import the `docx` library and use its functions.

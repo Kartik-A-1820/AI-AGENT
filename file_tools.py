@@ -1,6 +1,7 @@
 import os
 
 from langchain.tools import tool
+from workspace_paths import confined_path
 from assistant_state import WORKSPACE_DIR, ensure_assistant_home
 
 
@@ -10,13 +11,7 @@ os.makedirs(AGENT_DIR, exist_ok=True)
 
 
 def _safe_agent_path(filename: str) -> str:
-    filepath = os.path.abspath(os.path.join(AGENT_DIR, filename))
-    working_dir = os.path.abspath(AGENT_DIR)
-
-    if os.path.commonpath([filepath, working_dir]) != working_dir:
-        raise ValueError("Attempt to access outside agent_working is not allowed.")
-
-    return filepath
+    return str(confined_path(AGENT_DIR, filename))
 
 
 @tool

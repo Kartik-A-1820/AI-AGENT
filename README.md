@@ -1,5 +1,50 @@
 # OmniRoute Powered AI Agent
 
+
+## Code execution boundary (maintenance update)
+
+Generated Python execution is **disabled by default**. A working directory and
+regex denylist never provided process isolation; the old host-Python runner has
+been removed. Both CLI entrypoints register the code tool only when the owner
+sets `AI_AGENT_ENABLE_CODE=true`. The runner checks that setting again at call
+time and requires `AI_AGENT_DOCKER_IMAGE` to name an owner-prepared local image.
+There is no automatic image pull and no host-Python fallback.
+
+To enable it, install Docker with Linux-container support, prepare a trusted image
+containing Python and any required libraries, and set those two variables before
+launching the assistant. Prefer an image pinned by digest. Docker Desktop users
+must allow sharing the configured workspace drive. The image must support an
+unprivileged UID. Do not put credentials, the Docker socket, or host directories
+inside that image.
+
+Each call creates `agent_working/_jobs/<unique-id>/`. Only that job directory is
+mounted; input files are copied from resolved workspace paths and passed as
+`input_files`. Code runs under `/workspace`, with no host environment variables
+forwarded, no network, a read-only container root, dropped capabilities,
+no-new-privileges, and memory/CPU/process/file-size/time/output limits. Generated
+artifacts remain in the reported job directory. This changes where old scripts
+find inputs and write outputs: supply inputs explicitly and use relative names.
+
+Runtime pip installation is disabled. Prepare dependencies in the trusted image
+outside the agent. The host file tools resolve symlinks before checking paths.
+These path checks are convenience guards, not a hostile multi-user filesystem
+boundary; avoid concurrent untrusted host processes changing workspace symlinks.
+
+The container runner protects the code-execution path, not the entire assistant.
+Google Workspace and other network-capable tools run in the host service, and
+prompt-based action confirmation remains separate from this execution boundary.
+Containers share the host kernel and the job mount remains writable; this is not
+a hardened public multi-tenant execution service or a guarantee against kernel
+vulnerabilities or total workspace disk exhaustion.
+
+Verification: `pip install -r requirements-test.txt` followed by
+`python -m pytest -q tests`. These offline tests check default denial, no-host
+fallback, command restrictions, traversal/symlink checks, output/time limits,
+and cleanup after failure. A Docker daemon/image smoke test is additionally
+required before enabling execution on a deployment machine. See
+[Docker run options](https://docs.docker.com/reference/cli/docker/container/run/).
+
+
 This project is a powerful, interactive AI agent that runs its main chat model through a local OmniRoute OpenAI-compatible endpoint. OmniRoute can route and fail over across providers behind one local API, giving the agent longer, more flexible AI usage without hardcoding a single hosted provider. The agent can be controlled through a command-line interface (CLI) or a Streamlit-based graphical user interface (GUI).
 
 ![OmniRoute Powered AI Agent architecture](docs/assets/architecture-diagram.png)
@@ -17,13 +62,13 @@ This project is a powerful, interactive AI agent that runs its main chat model t
     - **Topic Research:** Creates cited research briefs, saves source metadata, and stores research artifacts under the assistant workspace.
     - **OmniRoute Media Generation:** Lists local Omniroute image/video routes and can generate media into the project sandbox. Gemini image generation remains an optional fallback when `GEMINI_API_KEY` is configured.
     - **Document Creation:** Can create professional-looking PowerPoint presentations and Word documents with both text and images.
-    - **Managed Code Execution:** Runs Python scripts from the project sandbox and can install pip packages into the dedicated virtual environment when needed.
+    - **Managed Code Execution:** Runs Python only through the opt-in isolated Docker runner; runtime package installation is disabled.
     - **File Management:** Can read and write files within a sandboxed assistant workspace.
 - **Conversational Memory:** Maintains a summary of the conversation, allowing it to retain context over longer interactions.
 - **Durable Personal Memory:** Stores user preferences, project notes, and local tasks across sessions in JSON files under the assistant home directory.
 - **Local Knowledge Graph Memory:** Stores compact entities and relationships in `knowledge_graph.json` under the assistant home directory. OmniRoute is used as a local extraction pipeline after each turn, while the graph itself stays fully local and free.
 - **Cost Tracking:** Monitors token usage and can estimate cost when OmniRoute pricing env vars are provided.
-- **Secure and Sandboxed:** File tools, generated documents, generated media, and managed Python scripts are restricted to the `agent_working` directory to reduce accidental local file damage. Disk cleanup, disk analysis, and storage-management tasks are intentionally outside the assistant's scope.
+- **Workspace-scoped outputs:** File tools, generated documents, and generated media use `agent_working`; generated Python has a separate opt-in Docker boundary described above. Disk cleanup, disk analysis, and storage-management tasks are intentionally outside the assistant's scope.
 
 ## Project Architecture
 
@@ -36,7 +81,7 @@ The agent's architecture is designed to be modular and extensible. Here's a brea
 - **`personal_tools.py`:** Adds everyday assistant tools for memory, graph facts, profile updates, task tracking, and daily brief generation.
 - **`research_tools.py`:** Adds async topic research with Tavily support and a lightweight search fallback, source fetching, citation prompts, and saved Markdown briefs.
 - **`media_tools.py`:** Adds async Omniroute media-model discovery plus image and video generation helpers with retries and sandboxed file output.
-- **`code_tools.py`:** Adds managed Python script execution and venv-only pip installation for coding tasks.
+- **`code_tools.py`:** Wraps opt-in Docker execution; dependencies are prepared in a trusted image by the owner.
 - **`async_utils.py`:** Centralizes background execution, retry/backoff behavior, and friendly exception formatting.
 - **`file_tools.py`:** Provides sandboxed read/write tools for the shared `agent_working` directory.
 - **`gui.py`:** This file provides a user-friendly graphical interface using Streamlit, making it easy to interact with the agent in a more visual way.

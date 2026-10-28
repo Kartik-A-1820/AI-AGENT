@@ -26,21 +26,16 @@ async def main() -> None:
     media = await list_omniroute_media_models.ainvoke({"kind": "all", "max_results": 5})
     assert "output=" in media or "No Omniroute media models" in media, media
 
-    blocked = await run_python_code.ainvoke(
-        {
-            "code": 'from pathlib import Path\nPath(r"C:\\temp\\ai_agent_blocked.txt").write_text("blocked")',
-            "filename": "blocked_outside_path.py",
-        }
-    )
-    assert "outside sandbox is blocked" in blocked, blocked
-
-    allowed = await run_python_code.ainvoke(
-        {
-            "code": 'from pathlib import Path\nPath("smoke.txt").write_text("ok", encoding="utf-8")\nprint(Path("smoke.txt").resolve())',
-            "filename": "allowed_sandbox_write.py",
-        }
-    )
-    assert "exit_code=0" in allowed, allowed
+    import os
+    if os.getenv("AI_AGENT_ENABLE_CODE", "").lower() == "true":
+        result = await run_python_code.ainvoke({
+            "code": 'from pathlib import Path\nPath("smoke.txt").write_text("ok")\nprint("container smoke OK")',
+            "filename": "container_smoke.py",
+        })
+        assert "exit_code=0" in result, result
+    else:
+        result = await run_python_code.ainvoke({"code": "print(1)"})
+        assert "disabled" in result, result
 
     token_path = ASSISTANT_HOME / "google_token.pickle"
     credentials_path = Path("credentials.json")
@@ -51,7 +46,7 @@ async def main() -> None:
     print(f"knowledge_graph_exists={GRAPH_PATH.exists()}")
     print("graph_memory_ok=True")
     print("media_probe_ok=True")
-    print("sandbox_code_guard_ok=True")
+    print("code_execution_policy_ok=True")
 
 
 if __name__ == "__main__":
